@@ -7,37 +7,33 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Driver;
+using AirlineBookingSystem.Flights.Infrastructure.Data;
 
 namespace AirlineBookingSystem.Flights.Infrastructure.Repositories
 {
     public class FlightRepository : IFlightRepository
     {
-        private readonly IDbConnection _dbConnection;
+        private readonly IFlightContext _context;
 
-        public FlightRepository(IDbConnection dbConnection)
+        public FlightRepository(IFlightContext context)
         {
-            _dbConnection = dbConnection;
+            _context = context;
         }
 
         public async Task AddFlightAsync(Flight flight)
         {
-            const string sql = @"
-            INSERT INTO Flights (Id, FlightNumber, Origin, Destination, DepartureTime, ArrivalTime)
-            VALUES (@Id, @FlightNumber, @Origin, @Destination, @DepartureTime, @ArrivalTime)";
-
-            await _dbConnection.ExecuteAsync(sql, flight);
+            await _context.Flights.InsertOneAsync(flight);
         }
 
         public async Task DeleteFlightAsync(Guid id)
         {
-            const string sql = "DELETE FROM Flights WHERE Id = @Id";
-            await _dbConnection.ExecuteAsync(sql, new { Id = id });
+            await _context.Flights.DeleteOneAsync(f => f.Id ==id);
         }
 
         public async Task<IEnumerable<Flight>> GetFlightsAsync()
         {
-            const string sql = "SELECT * FROM Flights";
-            return await _dbConnection.QueryAsync<Flight>(sql);
+            return await _context.Flights.Find(f => true).ToListAsync();
         }
     }
 }
